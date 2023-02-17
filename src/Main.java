@@ -1,20 +1,19 @@
 import java.io.File;
-import java.io.IOException;
 import java.util.Scanner;
 
 public class Main {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     System.out.println("Список товаров для покупки: ");
-    int[] basketCount = new int[3];
     String[] products = new String[]{"Хлеб", "Яблоки", "Молоко"};
     int[] prices = new int[]{100, 200, 300};
+
     File file = new File("basket.txt");
     Basket basket;
     if (file.exists()) {
       basket = Basket.loadFromBinFile(file);
     } else {
-      basket = new Basket(products, prices, basketCount);
+      basket = new Basket(products, prices);
     }
     Scanner scanner = new Scanner(System.in);
     for (int i = 0; i < products.length; i++) {
