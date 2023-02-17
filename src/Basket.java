@@ -73,8 +73,10 @@ public class Basket implements Serializable {
       return new Basket(products, prices, basketCount);
     }
   }
+
   public void saveBin(File file) {
-    try (FileOutputStream fileOutputStream = new FileOutputStream(file);
+    try (FileOutputStream fileOutputStream = new FileOutputStream(
+        file);
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
       objectOutputStream.writeObject(this);
     } catch (IOException e) {
@@ -84,8 +86,8 @@ public class Basket implements Serializable {
 
   static Basket loadFromBinFile(File file) {
     Basket basket;
-    try (FileInputStream fileInputStream = new FileInputStream(file);
-        ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
+    try (FileInputStream fileInputStream = new FileInputStream(
+        file); ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
       basket = (Basket) objectInputStream.readObject();
     } catch (IOException | ClassNotFoundException e) {
       throw new RuntimeException(e);

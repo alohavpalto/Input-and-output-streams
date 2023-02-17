@@ -12,7 +12,7 @@ public class Main {
     File file = new File("basket.txt");
     Basket basket;
     if (file.exists()) {
-      basket = Basket.loadFromTxtFile(file);
+      basket = Basket.loadFromBinFile(file);
     } else {
       basket = new Basket(products, prices, basketCount);
     }
