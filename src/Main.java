@@ -38,7 +38,7 @@ public class Main {
       basket.addToCart(productNum, count);
 
     }
-    basket.saveTxt(file);
+    basket.saveBin(file);
     basket.printCart();
     System.out.println("Итого " + sumProducts + " " + "рублей.");
   }
