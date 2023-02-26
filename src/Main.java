@@ -1,21 +1,81 @@
 import java.io.File;
+import java.io.IOException;
 import java.util.Scanner;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import org.w3c.dom.Document;
 
 public class Main {
 
-  public static void main(String[] args) {
+
+  public static void main(String[] args)
+      throws IOException, org.xml.sax.SAXException, NullPointerException {
+    Scanner scanner = new Scanner(System.in);
     System.out.println("Список товаров для покупки: ");
+    int[] basketCount = new int[3];
     String[] products = new String[]{"Хлеб", "Яблоки", "Молоко"};
     int[] prices = new int[]{100, 200, 300};
+    ClientLog clientLog = new ClientLog();
 
-    File file = new File("basket.txt");
-    Basket basket;
-    if (file.exists()) {
-      basket = Basket.loadFromBinFile(file);
-    } else {
-      basket = new Basket(products, prices);
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder;
+    Document doc;
+    try {
+      builder = factory.newDocumentBuilder();
+      doc = builder.parse(new File("shop.xml"));
+      doc.getDocumentElement().normalize();
+    } catch (ParserConfigurationException | IOException e) {
+      throw new RuntimeException(e);
     }
-    Scanner scanner = new Scanner(System.in);
+
+    boolean configLoadEnabled;
+    String configLoadFileName;
+    String configLoadFormat;
+    boolean configSaveEnabled;
+    String configSaveFileName;
+    String configSaveFormat;
+    boolean configLogEnabled;
+    String configLogFileName;
+
+    try {
+      XPathExpression xp = XPathFactory.newInstance().newXPath().compile("//config/load/enabled");
+      configLoadEnabled = Boolean.parseBoolean(xp.evaluate(doc));
+      xp = XPathFactory.newInstance().newXPath().compile("//config/load/fileName");
+      configLoadFileName = xp.evaluate(doc);
+      xp = XPathFactory.newInstance().newXPath().compile("//config/load/format");
+      configLoadFormat = xp.evaluate(doc);
+
+      xp = XPathFactory.newInstance().newXPath().compile("//config/save/enabled");
+      configSaveEnabled = Boolean.parseBoolean(xp.evaluate(doc));
+      xp = XPathFactory.newInstance().newXPath().compile("//config/save/fileName");
+      configSaveFileName = xp.evaluate(doc);
+      xp = XPathFactory.newInstance().newXPath().compile("//config/save/format");
+      configSaveFormat = xp.evaluate(doc);
+
+      xp = XPathFactory.newInstance().newXPath().compile("//config/log/enabled");
+      configLogEnabled = Boolean.parseBoolean(xp.evaluate(doc));
+      xp = XPathFactory.newInstance().newXPath().compile("//config/log/fileName");
+      configLogFileName = xp.evaluate(doc);
+
+    } catch (XPathExpressionException e) {
+      throw new RuntimeException(e);
+    }
+    File file = new File(configLoadFileName);
+    Basket basket;
+    if (configLoadEnabled && file.exists()) {
+      if (configLoadFormat.equals("json")) {
+        basket = Basket.loadFromJson(file);
+      } else {
+        basket = Basket.loadFromTxtFile(file);
+      }
+    } else {
+      basket = new Basket(products, prices, basketCount);
+    }
+
     for (int i = 0; i < products.length; i++) {
       System.out.println((i + 1) + ". " + products[i] + " " + prices[i] + " руб/шт. ");
     }
@@ -34,11 +94,23 @@ public class Main {
       count = Integer.parseInt(parts[1]);
       int sum = count * prices[productNum];
       sumProducts += sum;
+      clientLog.log(productNum, count);
       basket.addToCart(productNum, count);
-
     }
-    basket.saveBin(file);
-    basket.printCart();
-    System.out.println("Итого " + sumProducts + " " + "рублей.");
+    if (configSaveEnabled) {
+      if (configSaveFormat.equals(".json")) {
+        basket.saveJson(new File(configSaveFileName));
+      } else if (configSaveFormat.equals(".csv")) {
+//        basket.saveTxt(new File(configSaveFileName));
+//      }
+      }
+      basket.saveJson(file);
+      basket.printCart();
+      if (configLogEnabled) {
+        File logFile = new File(configLogFileName);
+        clientLog.exportAsCSV(logFile);
+      }
+      System.out.println("Итого " + sumProducts + " " + "рублей.");
+    }
   }
 }
